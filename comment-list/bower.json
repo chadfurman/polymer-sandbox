@@ -1,0 +1,22 @@
+{
+  "name": "comment-list",
+  "version": "0.0.0",
+  "authors": [
+    "Chad Furman <chad@fuzzproductions.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.8.0"
+  },
+  "resolutions": {
+    "webcomponentsjs": "^0.5",
+    "polymer": "^0.5"
+  }
+}
