@@ -48,9 +48,16 @@
 		<core-ajax auto id="githubReposApiRequest" url="http://api.github.com/users/{{user}}/repos" handleAs="json" on-core-response="{{processGithubRepos}}"></core-ajax>
 		<div horizontal start-justified layout wrap>
 			<template repeat="{{repo in repos}}">
-				<paper-shadow z="1" class="card repo {{ { phoneScreen: phoneScreen } | tokenList }}">
-					<core-ajax url="http://api.github.com/repos/{{repo.owner.login}}/{{repo.name}}/commits" handleAs="json" on-core-response="{{processGithubRepos}}"></core-ajax>
-					<paper-dialog>cats</paper-dialog>
+				<paper-shadow z="1" class="card repo {{ { phoneScreen: phoneScreen } | tokenList }}" on-click="{{fetchCommits}}">
+					<core-ajax url="http://api.github.com/repos/{{repo.owner.login}}/{{repo.name}}/commits" handleAs="json" on-core-response="{{processRepoCommits}}"></core-ajax>
+					<paper-dialog>
+						<template repeat="{{commit in commits}}" vertical layout>
+							<template horizontal layout>
+								<div>{{commit.commit.committer.date}}</div>
+								<div flex>{{commit.commit.message}}</div>
+							</template>
+						</template>
+					</paper-dialog>
 					<paper-ripple class="blue-ripple" fit on-click="{{}}"></paper-ripple>
 					<h2>
 						{{repo.name}}
@@ -64,6 +71,19 @@
 	<script>
 		Polymer({
 			repos: [],
+			commits: [],
+			fetchCommits: function (e) {
+				e.target.parentElement.getElementsByTagName('core-ajax')[0].go();
+				e.target.parentElement.getElementsByTagName('paper-dialog')[0].open();
+			},
+			processRepoCommits: function (event, response) {
+				this.commits = [];
+				response = response.response;
+				for (var commitIndex = 0; commitIndex < response.length; commitIndex++) {
+					this.commits.push(response[commitIndex]);
+				}
+				console.log(this.commits);
+			},
 			processGithubRepos: function (event, response) {
 				this.repos = [];
 				response = response.response;
