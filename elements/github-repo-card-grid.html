@@ -48,17 +48,14 @@
 		<core-ajax auto id="githubReposApiRequest" url="http://api.github.com/users/{{user}}/repos" handleAs="json" on-core-response="{{processGithubRepos}}"></core-ajax>
 		<div horizontal start-justified layout wrap>
 			<template repeat="{{repo in repos}}">
-				<paper-shadow z="1" class="card repo {{ { phoneScreen: phoneScreen } | tokenList }}" on-click="{{fetchCommits}}">
-					<core-ajax url="http://api.github.com/repos/{{repo.owner.login}}/{{repo.name}}/commits" handleAs="json" on-core-response="{{processRepoCommits}}"></core-ajax>
-					<paper-dialog>
-						<template repeat="{{commit in commits}}" vertical layout>
-							<template horizontal layout>
-								<div>{{commit.commit.committer.date}}</div>
-								<div flex>{{commit.commit.message}}</div>
-							</template>
+				<paper-shadow z="1" class="card repo {{ { phoneScreen: phoneScreen } | tokenList }}" on-click="{{repoClickHandler}}" id="{{repo.name}}">
+					<core-ajax url="http://api.github.com/repos/{{repo.owner.login}}/{{repo.name}}/commits" handleAs="json" on-core-response="{{processRepoCommits}}" id="{{repo.name}}-commit-ajax"></core-ajax>
+					<paper-dialog id="{{repo.name}}-dialog" transition="core-transition-center">
+						<template repeat="{{commitObj in commits}}" vertical layout>
+							<div flex>{{commitObj.commit.message}}</div>
 						</template>
 					</paper-dialog>
-					<paper-ripple class="blue-ripple" fit on-click="{{}}"></paper-ripple>
+					<paper-ripple class="blue-ripple" fit></paper-ripple>
 					<h2>
 						{{repo.name}}
 					</h2>
@@ -70,27 +67,87 @@
 
 	<script>
 		Polymer({
+			coms: [],
 			repos: [],
 			commits: [],
-			fetchCommits: function (e) {
-				e.target.parentElement.getElementsByTagName('core-ajax')[0].go();
-				e.target.parentElement.getElementsByTagName('paper-dialog')[0].open();
+			commitsCache: [],
+			openedDialog: null,
+
+			/**
+			 * Repo Click Handler
+			 */
+			repoClickHandler: function (e) {
+				var card = e.target.parentElement;
+
+				if (! this.openedDialog) {
+					// retrieve the dialog to open
+					var dialog = card.getElementsByTagName('paper-dialog')[0];
+
+					// fetch commits to display in dialog
+					this.fetchCommits(dialog);
+
+					// record the fact that the dialog was opened
+					this.openedDialog = dialog;
+				} else {
+					// dialog is already opened, so close it
+					this.openedDialog.close();
+
+					// dialog is no longer opened
+					this.openedDialog = null;
+				}
 			},
+
+			/**
+			 * Fetch Commits
+			 *
+			 * Performs the AJAX request to fetch commits for the repo that was clicked on.
+			 * Checks the commit cache first.
+			 *
+			 * @param dialog
+			 */
+			fetchCommits: function (dialog) {
+				this.commits = [];
+
+				if (this.commitsCache.hasOwnProperty(dialog.id)) {
+					this.commits = this.commitsCache[dialog.id];
+				} else {
+					var ajax = dialog.parentElement.getElementsByTagName('core-ajax')[0];
+					ajax.addEventListener('core-complete', function() {
+						dialog.addEventListener("core-overlay-open-completed", function (e) {
+							dialog.resizeHandler();
+						});
+						dialog.open();
+					});
+					ajax.go();
+				}
+			},
+
+			/**
+			 * Process Repo Commits
+			 *
+			 * @param event
+			 * @param response
+			 */
 			processRepoCommits: function (event, response) {
 				this.commits = [];
 				response = response.response;
 				for (var commitIndex = 0; commitIndex < response.length; commitIndex++) {
 					this.commits.push(response[commitIndex]);
 				}
-				console.log(this.commits);
 			},
+
+			/**
+			 * Process Github Repos
+			 *
+			 * @param event
+			 * @param response
+			 */
 			processGithubRepos: function (event, response) {
 				this.repos = [];
 				response = response.response;
 				for (var repoIndex = 0; repoIndex < response.length; repoIndex++) {
 					this.repos.push(response[repoIndex]);
 				}
-				console.log(this.repos);
 			}
 		});
 	</script>
