@@ -113,9 +113,12 @@
 				} else {
 					var ajax = dialog.parentElement.getElementsByTagName('core-ajax')[0];
 					ajax.addEventListener('core-complete', function() {
-						dialog.addEventListener("core-overlay-open-completed", function (e) {
+						dialog.addEventListener('core-overlay-open-completed', function (e) {
+							// ensure our dialog is the proper size for its dynamic contents
 							dialog.resizeHandler();
 						});
+
+						// display our dialog
 						dialog.open();
 					});
 					ajax.go();
